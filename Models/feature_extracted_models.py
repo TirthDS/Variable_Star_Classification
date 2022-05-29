@@ -1,7 +1,6 @@
 import sklearn
 from sklearn.preprocessing import LabelEncoder, Normalizer, OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import precision_score, recall_score
 import numpy as np
 import pickle
 import pandas as pd
@@ -9,6 +8,7 @@ import pandas as pd
 from tensorflow import keras
 import tensorflow as tf
 from tensorflow.keras import layers, models, regularizers, metrics, optimizers
+from obtain_metrics import get_precision_recall, plot_confusion_matrix
 
 def load_raw_data(x_data_file, y_data_file):
     '''
@@ -18,7 +18,7 @@ def load_raw_data(x_data_file, y_data_file):
         y_data_raw = np.array(pickle.load(f))
         
     return x_data_raw, y_data_raw
-    
+
 def preprocess(x_data, y_data, split=0.2, one_hot=True):
     '''
     '''
@@ -105,8 +105,12 @@ if __name__ == '__main__':
     sm_acc, sm_predictions = softmax_classifier(train_data_sm, test_data_sm)
     
     # Compute precision/recall/confusion matrix
+    labels = ['eb', 'irreg', 'mira', 'rr']
     print('Softmax Classifier:')
-    # TODO
+    precision_sm, recall_sm = get_precision_recall(test_data_sm[1], sm_predictions, onehot_encoded=False)
+    print('Precisions: ' + str(precision))
+    print('Recall: ' + str(recall))
+    plot_confusion_matrix(test_data_sm[1], sm_predictions, labels, 'Softmax CM', onehot_encoded=False)
     
     # Preprocess to normalize and split (nn)
     train_data_nn, val_data_nn, test_data_nn = preprocess(x_data_raw, y_data_raw)
@@ -116,4 +120,7 @@ if __name__ == '__main__':
     
     # Compute precision/recall/confusion matrix
     print('Fully Connected Neural Network:')
-    # TODO
+    precision_nn, recall_nn = get_precision_recall(test_data_nn[1], nn_predictions)
+    print('Precisions: ' + str(precision))
+    print('Recall: ' + str(recall))
+    plot_confusion_matrix(test_data_nn[1], nn_predictions, labels, 'FC Neural Network CM')
