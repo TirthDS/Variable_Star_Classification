@@ -1,10 +1,29 @@
+# +
+'''
+Defines the methods used to preprocess the data for the CNN-LSTM
+models.
+'''
+
 import pandas as pd
 import numpy as np
 from PyAstronomy.pyasl import foldAt
 from astropy.timeseries import LombScargle
 import pickle
 
+
+# -
+
 def get_padded_sequence_data(x_data, save_file, max_length = 500):
+    '''
+    Retrieves the raw magnitude data for each star, zero-pads/truncates the sequence
+    to 'max_length' to standardize the amount of datapoints for each star.
+    
+    Params:
+        - x_data: an array containing an array of times and magnitude values for each star (varying lengths)
+        - save_file: file to save padded sequential data
+        - max_length: the number of datapoints to standardize to, defaults to 500
+    '''
+    
     sequence_data = []
     
     for item in x_data:
@@ -24,6 +43,18 @@ def get_padded_sequence_data(x_data, save_file, max_length = 500):
         pickle.dump(sequence_data, f)
 
 def get_phase_folded_data_irregular(irregular_data):
+    '''
+    Obtains the phase folded data for the irregular stars by "assuming" there's
+    a period. The best period is obtained by generating a Lomb Scargle periodogram
+    and choosing the period corresponing to the highest power. Using this period,
+    a phase-folded diagram of the sequantial data is created.
+    
+    Params:
+        - irregular_data: array of time and magnitude data for each irregular star
+    
+    Returns:
+        - An array containing the phases and magnitudes (sorted in phase space) for each irregular star
+    '''
     irregular_data_phase_folded = []
     
     for item in irregular_data:
@@ -51,6 +82,18 @@ def get_phase_folded_data_irregular(irregular_data):
     return irregular_data_phase_folded
 
 def periodic_phase_folded_data(mag_data, period_data):
+    '''
+    Retrieves the phase-folded magnitudes for the periodic stars (eclipsing binaries,
+    mira, rr-lyrae).
+    
+    Params:
+        - 'mag_data': array of time and magnitude values for a given periodic star type
+        - 'period_data': corresponding list of periods for each star of a given type
+        
+    Returns:
+        - An array containing the phases and magnitudes (sorted in phase) for each irregular star
+    '''
+    
     data_phase_folded = []
     for item, period in zip(mag_data, period_data):
         time_data = item[0]
@@ -66,8 +109,18 @@ def periodic_phase_folded_data(mag_data, period_data):
     return data_phase_folded
 
 def process_phase_folded_data(phase_folded_data, save_file, max_length = 500):
+    '''
+    Pads/truncates the phase data (phases and magnitudes) and computes the consecutive differences
+    between them as a normalization technique. (Aguirre et al. 2019).
+    
+    Params:
+        - phase_folded_data: phase folded data for all of the stars obtained from the above methods
+        - save_file: location to save the resulting sequences to
+        - max_length: the number of datapoints to pad/truncate to
+    '''
     padded_phase_folded_data = []
     
+    # Pad/truncate both the phase and magnitude arrays
     for item in phase_folded_data:
         phases = item[0]
         mags = item[1]

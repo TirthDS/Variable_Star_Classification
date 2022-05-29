@@ -1,9 +1,16 @@
+# +
+'''
+Defines the methods used for classification using the tsfresh
+extracted features as input (softmax and base neural network).
+'''
+
 import sklearn
 from sklearn.preprocessing import LabelEncoder, Normalizer, OneHotEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 import numpy as np
 import pickle
 import pandas as pd
+# -
 
 from tensorflow import keras
 import tensorflow as tf
@@ -12,6 +19,11 @@ from obtain_metrics import get_precision_recall, plot_confusion_matrix
 
 def load_raw_data(x_data_file, y_data_file):
     '''
+    Retrieves the data stored as pickle files.
+    
+    Params:
+        - x_data_file: the pickle file containing the extracted features
+        - y_data_file: the pickle file containing the labels
     '''
     x_data_raw = np.array(pd.read_pickle(x_data_file))
     with open('y_data_file', 'rb') as f:
@@ -21,6 +33,16 @@ def load_raw_data(x_data_file, y_data_file):
 
 def preprocess(x_data, y_data, split=0.2, one_hot=True):
     '''
+    Preprocesses the data by generating onehot encodings for the labels,
+    splitting them into train/dev/test sets, and normalizing feature-wise.
+    
+    Params:
+        - x_data: the feature-extracted data
+        - y_data: the onehot-encoded labels
+        - split: the fraction to split the data into (defaults to 60/20/20)
+        
+    Returns:
+        - Tuples for the train/validation/test set.
     '''
     # Onehot encoding
     label_encoder = LabelEncoder()
@@ -45,6 +67,15 @@ def preprocess(x_data, y_data, split=0.2, one_hot=True):
 
 def softmax_classifier(train_data, test_data):
     '''
+    Performs softmax classification on the training data and generates
+    predictions on the testing data.
+    
+    Params:
+        - train_data: tuple of the normalized feature-extracted data and onehot encoded labels (for training)
+        - test_data: tuple of the normalized feature-extrated data and onhot encoded labels (for testing)
+        
+    Returns:
+        - testing accuracy and predictions on the test set
     '''
     clf = sklearn.linear_model.LogisticRegression(class_weight='balanced', multi_class='multinomial', 
                                                   solver='lbfgs', max_iter=10000)
@@ -59,6 +90,13 @@ def softmax_classifier(train_data, test_data):
 
 def baseline_neural_network_model(num_features):
     '''
+    Defines a 4 layer fully connected neural network.
+    
+    Params:
+        - num_features: the number of features extracted from tsfresh in the data
+    
+    Returns:
+        - Keras model object.
     '''
     X_input = layers.Input(num_features,)
     X = layers.Dense(128, activation='relu', kernel_regularizer = regularizers.l2(0.01))(X_input)
@@ -70,6 +108,16 @@ def baseline_neural_network_model(num_features):
 
 def fit_nn(train_data, val_data, test_data, epochs=15, batch_size=64):
     '''
+    Compiles the model defined above and traings the model on the training data.
+    Produces predictions on the testing data.
+    
+    Params:
+        - train_data: tuple of the x and y data for the training set
+        - val_data: tuple of the x and y data for the dev set
+        - test_data: tuple of the x and y data for the test set
+    
+    Returns:
+        - loss, accuracy, and predictions on the testing set
     '''
     x_train, y_train = train_data
     x_val, y_val = val_data
@@ -85,12 +133,6 @@ def fit_nn(train_data, val_data, test_data, epochs=15, batch_size=64):
     loss, acc = model.evaluate(x_test, y_test)
     predictions = model.predict(x_test)
     return loss, acc, predictions
-
-def decision_tree_classifier(train_data, test_data):
-    '''
-    TODO
-    '''
-    return
 
 if __name__ == '__main__':
     # Load raw data (post feature extraction with tsfresh)
