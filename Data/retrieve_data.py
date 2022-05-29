@@ -110,7 +110,7 @@ def load_dataframe(file_name):
     return df_irregular, df_eclipsing_binaries, df_short_period_rr_lyrae, df_long_period_mira_stars
 
 if __name__ == '__main__':
-    # Assume that metadata and raw data files are in ../data/* directory.
+    # Assume that metadata and raw data files are in ../Data/* directory.
     file = '../data/all_stars_meta.csv'
     df_irregular, df_eb, df_rr, df_mira = load_dataframe(file)
     all_files = glob.glob('../data/all_stars/*')
