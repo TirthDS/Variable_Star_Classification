@@ -1,24 +1,37 @@
+# +
+'''
+Contains methods that parses through directory of 600,000 stars to obtain the time
+and magnitude data for the appropriate stars in directory.
+
+This assumes that the data obtained from https://asas-sn.osu.edu/variables or 
+https://drive.google.com/drive/folders/1IAtztpddDeh5XOiuxmLWdLUaT_quXkug is stored
+in the local directory. This is a large file (~40 GB).
+'''
+
 import pandas as pd
-import pickle
 import glob
 import numpy as np
+import pickle
 
-file = 'cs_229_dat/asassn_catalog_full.csv'
-df = pd.read_csv(file)
-df_irregular = df.loc[df['variable_type'].isin(['YSO', 'L', 'GCAS'])]
-df_eclipsing_binaries = df.loc[df['variable_type'].isin(['EB', 'EA', 'EW', 'ELL'])]
-df_short_period_rr_lyrae = df.loc[df['variable_type'].isin(['RRAB', 'RRC', 'RRD'])]
-df_long_period_mira_stars = df.loc[df['variable_type'].isin(['M'])]
 
-all_files = glob.glob('cs_229_dat/vardb_files/*') # Gives list of all files containing actual data
+# -
 
-# Function to parse only the irregular data
-def parse_irregular_data(names, limit):
+def obtain_irregular_data(df, all_files, num_stars=5000):
+    '''
+    Retrieves num_stars amount of irregular stars' magnitude data.
+    
+    Params:
+        - df: the dataframe containing all of the irregular stars' metadata
+        - all_files: list of all the files containing magnitude data
+    '''
+    irregular_data_limit = []
+    irregular_names = df['asassn_name']
+
     count = 0
-    for item in names:
+    for item in irregular_names:
         if (count >= 5000):
             break
-        
+
         name = item.replace(" ", "")
         data_file = [file for file in all_files if file[23:-4]==name][0]
         f = open(data_file, "r")
@@ -26,20 +39,36 @@ def parse_irregular_data(names, limit):
         lines = np.array([line.split() for line in lines]).astype(float)
         if (len(lines) == 0):
             continue
-        
+
         time_data = lines[:, 0]
         mag_data = lines[:, 1]
         data = np.stack((time_data, mag_data))
-        limit.append(data)
-        
+        irregular_data_limit.append(data)
         count += 1
+    
+    # Save file
+    with open('irregular_data_limit', 'wb') as f:
+        pickle.dump(irregular_data_limit, f)
 
-# Function to parse only the eb, mira, and the rr lyrae
-def parse_other_data(names, periods):
+def obtain_other_data(df, all_files, save_file, num_stars=5000):
+    '''
+    Retreives num_stars amount of the other stars' magnitude and period data.
+    
+    Params:
+        - df: the dataframe containing all of the periodic stars metadata
+        - all_files: list of all the files containing magnitude data
+        - save_file: the location to save the data to
+    '''
+    data_limit = []
+    period_limit = []
+    names = df['asassn_name']
+    periods = df['period']
+    count = 0
+
     for item, period in zip(names, periods):
         if (count >= 5000):
             break
-        
+
         name = item.replace(" ", "")
         data_file = [file for file in all_files if file[23:-4]==name][0]
         f = open(data_file, "r")
@@ -47,38 +76,49 @@ def parse_other_data(names, periods):
         lines = np.array([line.split() for line in lines]).astype(float)
         if (len(lines) == 0):
             continue
-            
-        rr_period_limit.append(period)
-        
+
+        period_limit.append(period)
+
         time_data = lines[:, 0]
         mag_data = lines[:, 1]
         data = np.stack((time_data, mag_data))
-        rr_data_limit.append(data)
-        
+        data_limit.append(data)
         count += 1
+    
+    with open(save_file + '_periods_limit', 'wb') as f:
+        pickle.dump(period_limit, f)
+        
+    with open(save_file + '_data_limit', 'wb') as f:
+        pickle.dump(data_limit, f)
 
+def load_dataframe(file_name):
+    '''
+    Loads the metadata into dataframes for each star type.
+    
+    Params:
+        - file_name: the name of the file containing the medata for all stars
+        
+    Returns:
+        - dataframes of the irregular, eb, mira, and rr stars
+    '''
+    df = pd.read_csv(file_name)
+    df_irregular = df.loc[df['variable_type'].isin(['YSO', 'L', 'GCAS'])]
+    df_eclipsing_binaries = df.loc[df['variable_type'].isin(['EB', 'EA', 'EW', 'ELL'])]
+    df_short_period_rr_lyrae = df.loc[df['variable_type'].isin(['RRAB', 'RRC', 'RRD'])]
+    df_long_period_mira_stars = df.loc[df['variable_type'].isin(['M'])]
+    
+    return df_irregular, df_eclipsing_binaries, df_short_period_rr_lyrae, df_long_period_mira_stars
 
-irregular_data_limit = []
-irregular_names = df_irregular['asassn_name']
-parse_irregular_data(irregular_names, irregular_data_limit)
-
-eb_data_limit = []
-eb_period_limit = []
-eb_names = df_eclipsing_binaries['asassn_name']
-eb_periods = df_eclipsing_binaries['period']
-count = 0
-parse_other_data(eb_names, eb_periods)
-
-mira_data_limit = []
-mira_period_limit = []
-mira_names = df_eclipsing_binaries['asassn_name']
-mira_periods = df_eclipsing_binaries['period']
-count = 0
-parse_other_data(mira_names, mira_periods)
-
-rr_data_limit = []
-rr_period_limit = []
-rr_names = df_short_period_rr_lyrae['asassn_name']
-rr_periods = df_short_period_rr_lyrae['period']
-count = 0
-parse_other_data(rr_names, rr_periods)
+if __name__ == '__main__':
+    # Assume that metadata and raw data files are in ../data/* directory.
+    file = '../data/all_stars_meta.csv'
+    df_irregular, df_eb, df_rr, df_mira = load_dataframe(file)
+    all_files = glob.glob('../data/all_stars/*')
+    
+    # Extract and save time/magnitude data for irregulars (no period)
+    obtain_irregular_data(df_irregular)
+    
+    # Extract and save time/magnitude data for eb, rr, mira (with periods)
+    obtain_other_data(df_eb, 'eb')
+    obtain_other_data(df_rr, 'rr')
+    obtain_other_data(df_mira, 'mira')
