@@ -75,7 +75,7 @@ def fit_nn(train_data, val_data, test_data, epochs=15, batch_size=64):
     x_val, y_val = val_data
     x_test, y_test = test_data
     
-    model = baseline_model()
+    model = baseline_neural_network_model(x_train.shape[1])
     model.compile(optimizer = optimizers.Adam(learning_rate=0.001), 
                   loss = 'categorical_crossentropy', metrics = ['accuracy'])
     
