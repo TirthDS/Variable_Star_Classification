@@ -15,7 +15,7 @@ import pandas as pd
 from tensorflow import keras
 import tensorflow as tf
 from tensorflow.keras import layers, models, regularizers, metrics, optimizers
-from obtain_metrics import get_precision_recall, plot_confusion_matrix
+from obtain_metrics import get_metrics, plot_confusion_matrix
 
 def load_raw_data(x_data_file, y_data_file):
     '''
@@ -149,9 +149,10 @@ if __name__ == '__main__':
     # Compute precision/recall/confusion matrix
     labels = ['eb', 'irreg', 'mira', 'rr']
     print('Softmax Classifier:')
-    precision_sm, recall_sm = get_precision_recall(test_data_sm[1], sm_predictions, onehot_encoded=False)
+    precision_sm, recall_sm, f1_sm = get_metrics(test_data_sm[1], sm_predictions, onehot_encoded=False)
     print('Precisions: ' + str(precision))
     print('Recall: ' + str(recall))
+    print('Average F1 Score: ' + str(f1_sm))
     plot_confusion_matrix(test_data_sm[1], sm_predictions, labels, 'Softmax CM', onehot_encoded=False)
     
     # Preprocess to normalize and split (nn)
@@ -162,7 +163,8 @@ if __name__ == '__main__':
     
     # Compute precision/recall/confusion matrix
     print('Fully Connected Neural Network:')
-    precision_nn, recall_nn = get_precision_recall(test_data_nn[1], nn_predictions)
+    precision_nn, recall_nn, f1_nn = get_metrics(test_data_nn[1], nn_predictions)
     print('Precisions: ' + str(precision))
     print('Recall: ' + str(recall))
+    print('Average F1 Score: ' + str(f1_nn))
     plot_confusion_matrix(test_data_nn[1], nn_predictions, labels, 'FC Neural Network CM')

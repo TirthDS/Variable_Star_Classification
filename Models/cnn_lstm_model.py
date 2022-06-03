@@ -7,7 +7,7 @@ zero-padded/truncated data, and the phase folded data.
 from sklearn.preprocessing import LabelEncoder, Normalizer, OneHotEncoder, StandardScaler
 from tensorflow.keras import models, layers, optimizers, regularizers
 from sklearn.model_selection import train_test_split
-from obtain_metrics import get_precision_recall, plot_confusion_matrix
+from obtain_metrics import get_metrics, plot_confusion_matrix
 
 
 # -
@@ -176,9 +176,10 @@ if __name__ == '__main__':
     base_model = single_input_lstm_model(train1[0].shape[1])
     loss_base, acc_base, predictions_base = fit_model(base_model, train1, val1, test1)
     print('Base CNN-LSTM:')
-    precision_base, recall_base = get_precision_recall(test1[1], predictions_based)
+    precision_base, recall_base, f1_base = get_metrics(test1[1], predictions_based)
     print('Precision: ' + str(precision_base))
     print('Recall: ' + str(recall_base))
+    print('Average F1 Score: ' + str(f1_base)) 
     plot_confusion_matrix(test1[1], predictions_based, 'Base CNN LSTM CM')
     
     
@@ -190,9 +191,10 @@ if __name__ == '__main__':
     model = triple_input_lstm_model(train2[0][0].shape[1], train2[0][1].shape[1], train_2[0][2].shape[1])
     loss_triple, acc_triple, predictions_triple = fit_model(model, train2, val2, test2, epochs=10)
     print('Triple Input CNN-LSTM:')
-    precision, recall = get_precision_recall(test2[1], predictions_triple)
+    precision, recall, f1 = get_metrics(test2[1], predictions_triple)
     print('Precision: ' + str(precision))
     print('Recall: ' + str(recall))
+    print('Average F1 Score: ' + str(f1)) 
     plot_confusion_matrix(test2[1], predictions_triple, 'Triple Input CNN LSTM CM')
 
     
