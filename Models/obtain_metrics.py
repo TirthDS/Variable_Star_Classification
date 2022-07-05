@@ -3,15 +3,15 @@
 Defines the metrics used to evaluate each models' performance on the test set.
 '''
 
-from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, precision_score, recall_score
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix, precision_score, recall_score, f1_score
 import matplotlib.pyplot as plt
 
 
 # -
 
-def get_precision_recall(y_test, predictions, onehot_encoded=True):
+def get_metrics(y_test, predictions, onehot_encoded=True):
     '''
-    Calculates the precision and recall on the test set.
+    Calculates the precision, recall, and average f1 score on the test set.
     
     Params:
         - y_test: the labels from the testing set
@@ -19,16 +19,18 @@ def get_precision_recall(y_test, predictions, onehot_encoded=True):
         - onhot_encoded: true if labels are onehot encoded, false if integer encoded
     
     Returns:
-        - Array of precision values for each class and recall values for each class
+        - Array of precision values for each class and recall values for each class and the average
+        f1 score across all the classes.
     '''
     if onehot_encoded:
         y_test = y_test.argmax(axis=1)
         predictions = predictions.argmax(axis=1)
     
     precision = precision_score(y_test, predictions, average=None)
-    recall = recall_score(y_test, predictions, acerage=None)
+    recall = recall_score(y_test, predictions, average=None)
+    avg_f1 = f1_score(y_test, predictions, average='macro')
     
-    return precision, recall
+    return precision, recall, avg_f1
 
 def plot_confusion_matrix(y_test, predictions, labels, title, onehot_encoded=True):
     '''

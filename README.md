@@ -1,2 +1,2 @@
-# Variable_Star_Classification
-CS 229 Final Project
+# Variable Star Classification
+[CS 229 Final Project](cs_229_paper.pdf)
